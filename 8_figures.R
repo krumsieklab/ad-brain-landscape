@@ -384,7 +384,11 @@ if(to_cytoscape){
   # loop over phenotypes
   outcomes <- read.xlsx(file_outcomes) %>% filter(!outcome=='amyloid')
   cytoscape_data <- lapply(1:nrow(outcomes), FUN=function(i) {
-    this_df <- res %>% filter(outcome%in%outcomes$outcome[i])
+    this_df <- res %>% filter(outcome%in%outcomes$outcome[i]) %>%
+      # change the direction of statistics so all phenotypes are in same direction w AD incidence
+      dplyr::mutate(statistic = case_when((outcome == "cogn_global" | outcome=='cogng_random_slope') 
+                                          ~ -1*statistic, TRUE ~ statistic))
+                    
     # select relevant columns
     y <- this_df %>% select(adj_p, statistic)
     # add more relevant columns
