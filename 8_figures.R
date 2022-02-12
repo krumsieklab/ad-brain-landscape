@@ -1,4 +1,4 @@
-# Figures 2, 3, 4 mostly [@rb can we be more specific here? "mostly"?]
+# Figures 2, 3, 4
 
 # Note: Cytoscape needs to be running and allow incoming connections to
 # generate GGM networks (see also RCy3 package).
