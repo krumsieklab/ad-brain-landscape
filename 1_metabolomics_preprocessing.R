@@ -90,6 +90,10 @@ D %<>% # attach metadata
   mt_anno_mutate(anno_type = 'samples',
                  col_name = 'sqrt_amyloid',
                  term = case_when(!is.na(amyloid) ~ sqrt(amyloid), is.na(amyloid) ~ NA_real_)) %>%
+  # converting cogng_random_slope - cognitive decline to positively correlate with AD pathology
+  mt_anno_mutate(anno_type = 'samples',
+                 col_name = 'cogng_random_slope',
+                 term = -1*cogng_random_slope) %>%
   mt_reporting_data()
 
 # medication correction ----

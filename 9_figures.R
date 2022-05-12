@@ -1,4 +1,4 @@
-# Figures 2, 3, 4 mostly [@rb can we be more specific here? "mostly"?]
+# Figures 2, 3, 6
 
 # Note: Cytoscape needs to be running and allow incoming connections to
 # generate GGM networks (see also RCy3 package).
@@ -74,7 +74,7 @@ res <- rosmap_results %>%
 met_stats <- 
   res %>% 
   # change the direction of statistics so all phenotypes are in same direction w AD incidence
-  dplyr::mutate(statistic = case_when((outcome == "cogn_global" | outcome=='cogng_random_slope') 
+  dplyr::mutate(statistic = case_when((outcome == "cogn_global") #| outcome=='cogng_random_slope') 
                                       ~ -1*statistic, TRUE ~ statistic), 
                 # create a variable for sign of association
                 stat_sign = case_when(statistic > 0 ~ 1, statistic < 0 ~ -1), 
@@ -139,6 +139,7 @@ Y <-  D %>% colData() %>% data.frame() %>%
   # select relevant columns
   select(sqrt_amyloid, tangles, gpath, niareagansc, 
          diagnosis, cogdx, cogn_global, cogng_random_slope)
+
 # kendall correlation
 cor_mat <- cor(Y, method = 'kendall', use='pairwise')
 rownames(cor_mat) <- colnames(cor_mat) <- c('Amyloid', 'Tangles',  
@@ -199,8 +200,8 @@ X <- assay(D)
 y <- D$cogng_random_slope
 # median for splitting data into two
 med_y <- median(y, na.rm=T)
-y[which(D$cogng_random_slope <= med_y)] <- sprintf('>%g', med_y) # inverse for this phenotype
-y[which(D$cogng_random_slope > med_y)] <- sprintf('<%g', med_y) # inverse for this phenotype
+y[which(D$cogng_random_slope <= med_y)] <- sprintf('<%g', med_y) # inverse for this phenotype
+y[which(D$cogng_random_slope > med_y)] <- sprintf('>%g', med_y) # inverse for this phenotype
 # format for plotting with selected metabolite
 plot_mat <- reshape2::melt(split(X[which(rowData(D)$name%in%'glycerophosphoethanolamine'), ], y))
 # plot
@@ -386,7 +387,7 @@ if(to_cytoscape){
   cytoscape_data <- lapply(1:nrow(outcomes), FUN=function(i) {
     this_df <- res %>% filter(outcome%in%outcomes$outcome[i]) %>%
       # change the direction of statistics so all phenotypes are in same direction w AD incidence
-      dplyr::mutate(statistic = case_when((outcome == "cogn_global" | outcome=='cogng_random_slope') 
+      dplyr::mutate(statistic = case_when((outcome == "cogn_global")# | outcome=='cogng_random_slope') 
                                           ~ -1*statistic, TRUE ~ statistic))
                     
     # select relevant columns
@@ -496,7 +497,7 @@ if(to_cytoscape){
     # add node attributes
     loadTableData(node_attributes, data.key.column = 'id', table = 'node')
     #then prepare style variables
-    style.name = this_style
+    style.name <- this_style
     nodeLabels <- RCy3::mapVisualProperty('node label','node_name','p')
     edgeStyles <- RCy3::mapVisualProperty('edge line type', 'edge_type', 'd',
                                           c("neg", "pos"), c("LONG_DASH", "SOLID"))
@@ -513,7 +514,7 @@ if(to_cytoscape){
       table.column = as.name(sprintf('%s_pval_score', make.names(outcome_name))),
       table.column.values = c(-1*max_val, 0, max_val),
       mapping.type = "c",
-      colors= c('#E74C3C' ,'#F0F3F4', '#3498DB'),
+      colors= c('#3498DB', '#F0F3F4', '#E74C3C'),
       style.name=style.name, base.url = 'http://localhost:1234/v1',
       network = this_net
     )
@@ -555,96 +556,15 @@ if(to_cytoscape){
     table.column = 'super_score',
     table.column.values = c(-1*max_val, 0, max_val),
     mapping.type = "c",
-    colors= c('#E74C3C' ,'#F0F3F4', '#3498DB'),
+    colors= c('#3498DB', '#F0F3F4', '#E74C3C'),
     style.name=style.name, base.url = 'http://localhost:1234/v1',
     network = this_net
   )
   # setting the layout
   RCy3::layoutNetwork(layout.name = 'cose', network = this_net, base.url = 'http://localhost:1234/v1')
 }
-# Figure 3: Conditional analysis ----
 
-
-# ...metabolomics ----
-# load conditional analysis results of metabolomics
-amy_res <- read.xlsx(metabolomics_conditional_results, sheet='abeta_pathology')
-tau_res <- read.xlsx(metabolomics_conditional_results, sheet='tau_pathology')
-# results of conditional and standard analysis
-res_list <- list()
-res_list[['Amyloid*']] <- amy_res %>% filter(adj_p  <=pcut) %>% pull(name)
-res_list[['Tangles*']] <- tau_res %>% filter(adj_p  <=pcut) %>% pull(name)
-res_list[['Amyloid']] <- res %>% filter(adj_p<=pcut & outcome=='sqrt_amyloid') %>% pull(name)
-res_list[['Tangles']] <- res %>% filter(adj_p<=pcut & outcome=='tangles') %>% pull(name)
-# results list for stacked barplot
-tmp <- list()
-tmp[['only_st']] <- setdiff(res_list$Tangles, res_list$`Tangles*`) %>% length()
-tmp[['only_ct']] <- setdiff(res_list$`Tangles*`, res_list$Tangles) %>% length()
-tmp[['both_t']] <- intersect(res_list$Tangles, res_list$`Tangles*`) %>% length()
-tmp[['only_sa']] <- setdiff(res_list$Amyloid, res_list$`Amyloid*`) %>% length()
-tmp[['only_ca']] <- setdiff(res_list$`Amyloid*`, res_list$Amyloid) %>% length()
-tmp[['both_a']] <- intersect(res_list$Amyloid, res_list$`Amyloid*`) %>% length()
-
-# format the data
-tmp2 <- reshape2::melt(tmp)
-tmp2$np <- c('t', 't', 't', 'a', 'a', 'a')
-tmp2$L1 <- factor(tmp2$L1, levels=c('only_st', 'only_ct', 'both_t', 'only_sa', 'only_ca','both_a'))
-# stacked batplot
-p1 <- ggplot(tmp2, aes(x=np, y=value, fill=L1, label=value)) +
-  geom_bar(stat="identity", position = 'stack') +
-  geom_text(size = 3, position = position_stack(vjust = 0.5))+
-  xlab("") + ylab("") + theme_classic() +
-  theme(text = element_text(size=15)) + ggtitle ("") +
-  scale_fill_manual(values=c('#117A65', '#45B39D', '#73C6B6', '#D4AC0D', '#F7DC6F', '#F9E79F' ), name='Significance')+
-  coord_flip(clip = 'off')
-# plot
-pdf('results/Figure3a_metabolomics_proteinopathy_barplot.pdf', height = 2, width=6)
-plot(p1)
-dev.off()
-
-
-# ...proteomics ----
-# load proteomics results
-res <- rosmap_proteomics_results %>%
-  excel_sheets() %>%
-  purrr::set_names() %>%
-  map(read_excel, path = rosmap_proteomics_results) %>%
-  purrr::imap(~mutate(.x, group = .y)) %>% bind_rows()
-
-# results from conditional and standard analysis
-res_list <- list()
-res_list[['Amyloid*']] <- res %>% filter(adj_p<=pcut & outcome=='abeta_pathology') %>% pull(name) %>% unique()
-res_list[['Tangles*']] <- res %>% filter(adj_p<=pcut & outcome=='tau_pathology') %>% pull(name) %>% unique()
-res_list[['Amyloid']] <- res %>% filter(adj_p<=pcut & outcome=='sqrt_amyloid') %>% pull(name) %>% unique()
-res_list[['Tangles']] <- res %>% filter(adj_p<=pcut & outcome=='tangles') %>% pull(name)%>% unique()
-# result list for stacked barplot
-tmp <- list()
-tmp[['only_st']] <- setdiff(res_list$Tangles, res_list$`Tangles*`) %>% length()
-tmp[['only_ct']] <- setdiff(res_list$`Tangles*`, res_list$Tangles) %>% length()
-tmp[['both_t']] <- intersect(res_list$Tangles, res_list$`Tangles*`) %>% length()
-tmp[['only_sa']] <- setdiff(res_list$Amyloid, res_list$`Amyloid*`) %>% length()
-tmp[['only_ca']] <- setdiff(res_list$`Amyloid*`, res_list$Amyloid) %>% length()
-tmp[['both_a']] <- intersect(res_list$Amyloid, res_list$`Amyloid*`) %>% length()
-
-# reformat data
-tmp2 <- reshape2::melt(tmp)
-tmp2$np <- c('t', 't', 't', 'a', 'a', 'a')
-tmp2$L1 <- factor(tmp2$L1, levels=c('only_st', 'only_ct', 'both_t', 'only_sa', 'only_ca','both_a'))
-
-# stacked barplot
-p1 <- ggplot(tmp2, aes(x=np, y=value, fill=L1, label=value)) +
-  geom_bar(stat="identity", position = 'stack') +
-  geom_text(size = 3, position = position_stack(vjust = 0.5))+
-  xlab("") + ylab("") + theme_classic() +
-  theme(text = element_text(size=15))+
-  ggtitle ("") +
-  scale_fill_manual(values=c('#117A65', '#45B39D', '#73C6B6', '#D4AC0D', '#F7DC6F', '#F9E79F' ), name='Significance')+
-  coord_flip(clip = 'off')
-pdf("results/Figure3b_proteomics_proteinopathy_barplot.pdf", height = 2, width=6)
-plot(p1)
-dev.off()
-
-
-# Figure 4: Replication ----
+# Figure 3: Replication ----
 
 # ... Mayo ----
 # load mayo results
@@ -690,7 +610,7 @@ tmp <- apply(tmp[,-1], 2, FUN=function(x){
   x <- as.numeric(as.matrix(x))
   return(x)
 })
-pdf('results/Figure4a_Mayo_heatmap.pdf', height=9, width=9)
+pdf('results/Figure3a_Mayo_heatmap.pdf', height=9, width=9)
 # plotting removing the name of the rows
 pheatmap(tmp, cluster_rows = F, 
          cluster_cols = F, labels_row = metabolite_names, 
@@ -765,7 +685,7 @@ neworder <- c('Alanine', 'Glutamate', "Betaine", "Choline","Creatine",
 # data with new order
 tmp <- tmp [match(neworder, tmp$metabolite_name), ]
 # heatmap
-pdf('results/Figure4b_blsa_heatmap.pdf', height=5, width=8)
+pdf('results/Figure3b_blsa_heatmap.pdf', height=5, width=8)
 pheatmap(tmp[, -1], na_col = 'white', cluster_rows = F, 
          cluster_cols = F, labels_row = tmp[, 1], 
          angle_col = 45, cellwidth = 10, cellheight = 10, 
@@ -776,7 +696,88 @@ pheatmap(tmp[, -1], na_col = 'white', cluster_rows = F,
 dev.off()
 
 
-# Figures 5 & 6 ----
+# Figures 4 & 5 ----
 # These are manually generated diagrams annotated with results from Supplementary Tables 6 & 13
+
+# Figure 6: Conditional analysis ----
+
+
+# ...metabolomics ----
+# load conditional analysis results of metabolomics
+amy_res <- read.xlsx(metabolomics_conditional_results, sheet='abeta_pathology')
+tau_res <- read.xlsx(metabolomics_conditional_results, sheet='tau_pathology')
+# results of conditional and standard analysis
+res_list <- list()
+res_list[['Amyloid*']] <- amy_res %>% filter(adj_p  <=pcut) %>% pull(name)
+res_list[['Tangles*']] <- tau_res %>% filter(adj_p  <=pcut) %>% pull(name)
+res_list[['Amyloid']] <- res %>% filter(adj_p<=pcut & outcome=='sqrt_amyloid') %>% pull(name)
+res_list[['Tangles']] <- res %>% filter(adj_p<=pcut & outcome=='tangles') %>% pull(name)
+# results list for stacked barplot
+tmp <- list()
+tmp[['only_st']] <- setdiff(res_list$Tangles, res_list$`Tangles*`) %>% length()
+tmp[['only_ct']] <- setdiff(res_list$`Tangles*`, res_list$Tangles) %>% length()
+tmp[['both_t']] <- intersect(res_list$Tangles, res_list$`Tangles*`) %>% length()
+tmp[['only_sa']] <- setdiff(res_list$Amyloid, res_list$`Amyloid*`) %>% length()
+tmp[['only_ca']] <- setdiff(res_list$`Amyloid*`, res_list$Amyloid) %>% length()
+tmp[['both_a']] <- intersect(res_list$Amyloid, res_list$`Amyloid*`) %>% length()
+
+# format the data
+tmp2 <- reshape2::melt(tmp)
+tmp2$np <- c('t', 't', 't', 'a', 'a', 'a')
+tmp2$L1 <- factor(tmp2$L1, levels=c('only_st', 'only_ct', 'both_t', 'only_sa', 'only_ca','both_a'))
+# stacked batplot
+p1 <- ggplot(tmp2, aes(x=np, y=value, fill=L1, label=value)) +
+  geom_bar(stat="identity", position = 'stack') +
+  geom_text(size = 3, position = position_stack(vjust = 0.5))+
+  xlab("") + ylab("") + theme_classic() +
+  theme(text = element_text(size=15)) + ggtitle ("") +
+  scale_fill_manual(values=c('#117A65', '#45B39D', '#73C6B6', '#D4AC0D', '#F7DC6F', '#F9E79F' ), name='Significance')+
+  coord_flip(clip = 'off')
+# plot
+pdf('results/Figure6a_metabolomics_proteinopathy_barplot.pdf', height = 2, width=6)
+plot(p1)
+dev.off()
+
+
+# ...proteomics ----
+# load proteomics results
+res <- rosmap_proteomics_results %>%
+  excel_sheets() %>%
+  purrr::set_names() %>%
+  map(read_excel, path = rosmap_proteomics_results) %>%
+  purrr::imap(~mutate(.x, group = .y)) %>% bind_rows()
+
+# results from conditional and standard analysis
+res_list <- list()
+res_list[['Amyloid*']] <- res %>% filter(adj_p<=pcut & outcome=='abeta_pathology') %>% pull(name) %>% unique()
+res_list[['Tangles*']] <- res %>% filter(adj_p<=pcut & outcome=='tau_pathology') %>% pull(name) %>% unique()
+res_list[['Amyloid']] <- res %>% filter(adj_p<=pcut & outcome=='sqrt_amyloid') %>% pull(name) %>% unique()
+res_list[['Tangles']] <- res %>% filter(adj_p<=pcut & outcome=='tangles') %>% pull(name)%>% unique()
+# result list for stacked barplot
+tmp <- list()
+tmp[['only_st']] <- setdiff(res_list$Tangles, res_list$`Tangles*`) %>% length()
+tmp[['only_ct']] <- setdiff(res_list$`Tangles*`, res_list$Tangles) %>% length()
+tmp[['both_t']] <- intersect(res_list$Tangles, res_list$`Tangles*`) %>% length()
+tmp[['only_sa']] <- setdiff(res_list$Amyloid, res_list$`Amyloid*`) %>% length()
+tmp[['only_ca']] <- setdiff(res_list$`Amyloid*`, res_list$Amyloid) %>% length()
+tmp[['both_a']] <- intersect(res_list$Amyloid, res_list$`Amyloid*`) %>% length()
+
+# reformat data
+tmp2 <- reshape2::melt(tmp)
+tmp2$np <- c('t', 't', 't', 'a', 'a', 'a')
+tmp2$L1 <- factor(tmp2$L1, levels=c('only_st', 'only_ct', 'both_t', 'only_sa', 'only_ca','both_a'))
+
+# stacked barplot
+p1 <- ggplot(tmp2, aes(x=np, y=value, fill=L1, label=value)) +
+  geom_bar(stat="identity", position = 'stack') +
+  geom_text(size = 3, position = position_stack(vjust = 0.5))+
+  xlab("") + ylab("") + theme_classic() +
+  theme(text = element_text(size=15))+
+  ggtitle ("") +
+  scale_fill_manual(values=c('#117A65', '#45B39D', '#73C6B6', '#D4AC0D', '#F7DC6F', '#F9E79F' ), name='Significance')+
+  coord_flip(clip = 'off')
+pdf("results/Figure6b_proteomics_proteinopathy_barplot.pdf", height = 2, width=6)
+plot(p1)
+dev.off()
 
 

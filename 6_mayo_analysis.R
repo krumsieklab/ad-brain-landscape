@@ -1,6 +1,6 @@
 # Script to calculate metabolites associated with diagnosis in the Mayo cohort
 
-# Generates 1 file for supplementary table 11
+# Generates 1 file for supplementary table 9
 
 
 # libraries
@@ -20,7 +20,7 @@ mayo_metadata <- 'input/metadata_mayo_brain_ms.xlsx'
 # this is result of script 4_*.R
 rosmap_results <- 'results/supplementary_table_6_metabolomics_associations_with_ad.xlsx'
 # output
-mayo_metabolomics_output <- 'results/supplementary_table_11_mayo_ad_tcx_metabolomics_associations.xlsx'
+mayo_metabolomics_output <- 'results/supplementary_table_9_mayo_ad_tcx_metabolomics_associations.xlsx'
 # adjusted p-value cutoff
 pcut <- 0.05 
 
@@ -156,4 +156,4 @@ openxlsx::saveWorkbook (wb, file=mayo_metabolomics_output, overwrite=TRUE)
 ## finished
 print("Done! Mayo metabolomics association analysis completed.") 
 
-print("Generated excel file with supplementary table 11 in results folder!") 
+print("Generated excel file with supplementary table 9 in results folder!") 
