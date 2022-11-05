@@ -39,16 +39,3 @@ Run scripts in sequence 1 to 8. Scripts 1 and 7 are time consuming, please read 
 # Interactive online network supplement
 
 An interactive network view of AD associations from this study can be found <a href="https://omicscience.org/apps/brainmwas/">here</a>.
-
-# Reference
-
-```
-@article{batra_2021,
-  author = {Batra Richa, Arnold Matthias, Woerheide Maria A., Allen Mariet, Wang Xue, Blach Colette, Levey Allan I., Seyfried Nicholas T.,
-  Ertekin-Taner Niluefer, Bennett David A., Kastenmueller Gabi, Kaddurah-Daouk Rima F., Krumsiek Jan},
-  doi = {},
-  title = {{The landscape of metabolic brain alterations in Alzheimer's disease}},
-  url = {},
-  year = {2021}
-}
-```
