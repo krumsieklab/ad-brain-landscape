@@ -2,7 +2,7 @@
 
 # The landscape of metabolic brain alterations in Alzheimer's disease
 
-This repository contains scripts for analysis and figure generation of the paper<br/> **Batra\*, Arnold\* et. al.** The landscape of metabolic brain alterations in Alzheimer's disease (2021), *Biorxiv*.
+This repository contains scripts for analysis and figure generation of the paper<br/> **Batra\*, Arnold\* et. al.** The landscape of metabolic brain alterations in Alzheimer's disease (2022), *Alzheimer's & Dementia*. [link](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.12714)
 
 # Content
 | Script name | Description |
